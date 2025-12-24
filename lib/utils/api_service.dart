@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/mock_api_service.dart';
 
 class ApiService {
-  static const String baseUrl = "https://webems.gustech.com.tw/api2";
+  static const String baseUrl = "https://webems.gustech.com.tw/api1";
   static bool useMock = false;
 
   /// ===== JWT Token =====
@@ -332,4 +332,5 @@ class ApiService {
     };
     return await patch("/devices/update-info", body);
   }
+
 }

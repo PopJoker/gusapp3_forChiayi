@@ -3,7 +3,6 @@ import 'LES/device_data.dart';
 import 'HES/device_data.dart';
 import 'device_history.dart';
 import 'device_money.dart';
-import 'device_pcs.dart';
 import 'device_set.dart';
 import 'device_log.dart';
 import '../../utils/theme_colors.dart';
@@ -88,7 +87,7 @@ class _DataHomePageState extends State<DataHomePage> with WidgetsBindingObserver
           S.of(context)!.deviceRevenue,
           S.of(context)!.basicSetting,
           S.of(context)!.logSetting,
-          S.of(context)!.pcsSetting,
+          //S.of(context)!.pcsSetting,
         ];
 
         _menuIcons = [
@@ -97,7 +96,7 @@ class _DataHomePageState extends State<DataHomePage> with WidgetsBindingObserver
           Icons.attach_money,
           Icons.settings_applications,
           Icons.read_more,
-          Icons.build,
+          //Icons.build,
         ];
 
         _pages = [
@@ -115,10 +114,10 @@ class _DataHomePageState extends State<DataHomePage> with WidgetsBindingObserver
             serialNum: widget.site['serial_number'] ?? "0000",
           ),
           LogDataWidget(site: widget.site),
-          PCSSettingPageWidget(
-            model: widget.site['model'] ?? "未知型號",
-            serialNum: widget.site['serial_number'] ?? "0000",
-          ),
+          // PCSSettingPageWidget(
+          //   model: widget.site['model'] ?? "未知型號",
+          //   serialNum: widget.site['serial_number'] ?? "0000",
+          // ),
         ];
         break;
 
