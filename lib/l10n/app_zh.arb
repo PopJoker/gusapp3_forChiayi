@@ -219,5 +219,6 @@
   "confirmDeleteAccount": "確定要刪除帳號嗎？",
   "delete": "刪除",
   "accountDeletedSuccessfully": "帳號已刪除",
-  "deleteFailed": "刪除失敗"
+  "deleteFailed": "刪除失敗",
+  "average": "平均"
 }

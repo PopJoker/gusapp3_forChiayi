@@ -164,7 +164,7 @@ class ApiService {
       };
     }
   }
-
+  
   /// ===== 處理回應 =====
   static Map<String, dynamic> _handleResponse(http.Response response) {
     try {
@@ -241,6 +241,47 @@ class ApiService {
         };
     }
   }
+
+  /// ===== 取得收益 Revenue (allmoneybackmyhome API) =====
+  static Future<Map<String, dynamic>> getDeviceRevenue(String serialNum) async {
+    if (useMock) {
+      // Mock 回傳範例
+      return {
+        "status": 200,
+        "data": {
+          "device": {
+            "id": 1,
+            "serial_number": serialNum,
+            "is_active": "online",
+          },
+          "income": {
+            "today": 0.13,
+            "month": 0.13,
+            "last7Days": [
+              {
+                "date": "2025-12-26",
+                "chg": 0.328,
+                "dsg": 0.021,
+                "income": 0.13,
+              }
+            ]
+          }
+        }
+      };
+    }
+
+    // 真實 API
+    final result = await get("/devices/$serialNum/revenue");
+    if (result['status'] == 200 && result['data']['data'] != null) {
+      return {"status": 200, "data": result['data']['data']};
+    } else {
+      return {
+        "status": result['status'],
+        "data": result['data'] ?? {"message": "沒有資料"},
+      };
+    }
+  }
+
 
   /// ===== 保留原有方法名稱，不改頁面呼叫 =====
   static Future<Map<String, dynamic>> getDeviceNowData(

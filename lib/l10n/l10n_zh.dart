@@ -523,4 +523,7 @@ class SZh extends S {
 
   @override
   String get deleteFailed => '刪除失敗';
+
+  @override
+  String get average => '平均';
 }

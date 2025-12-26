@@ -6,6 +6,7 @@ import '../device pages/device_set.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../l10n/l10n.dart';
 import '../../utils/api_service.dart';
+import '../../utils/refresh_timer.dart';
 
 class RevenuePageWidget extends StatefulWidget {
   const RevenuePageWidget({super.key, required this.site});
@@ -22,35 +23,9 @@ class _RevenuePageWidgetState extends State<RevenuePageWidget>
   int? dailyTarget;
   int? monthlyTarget;
 
-  Future<void> fetchRevenue() async {
-    final result = await ApiService.getDeviceNowData(
-      widget.site['model'],
-      widget.site['serial_number'],
-    );
-    if (result['status'] == 200) {
-      final income = result['data']['income'];
-      if (income != null) {
-        final List last7 = income['last7Days'] ?? [];
-        final monthRevenue = (income['month'] as num?)?.toDouble() ?? 0.0;
-
-        last7DaysRevenue.clear();
-        for (var day in last7) {
-          last7DaysRevenue.add({
-            'dayRevenue': (day['income'] as num?)?.toDouble() ?? 0.0,
-            'monthRevenue': monthRevenue,
-          });
-        }
-      }
-
-      if (mounted) setState(() {});
-    }
-  }
-
-
   @override
   void initState() {
     super.initState();
-    fetchRevenue();
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 5),
@@ -58,6 +33,90 @@ class _RevenuePageWidgetState extends State<RevenuePageWidget>
 
     _loadSavedTargetsAndSetState();
     _loadRevenueFromNowData();
+    fetchRevenue();
+
+    // 訂閱即時資料
+    RealtimeService().subscribe(widget.site['serial_number'], _onRealtimeData);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    RealtimeService().unsubscribe(widget.site['serial_number'], _onRealtimeData);
+    super.dispose();
+  }
+
+  void _updateTargets(int daily, int monthly) {
+    setState(() {
+      dailyTarget = daily;
+      monthlyTarget = monthly;
+    });
+  }
+
+  void _onRealtimeData(Map<String, dynamic> data) {
+    if (!mounted) return;
+
+    final income = data['income'];
+    if (income == null) return;
+
+    final monthRevenue = (income['month'] as num?)?.toDouble() ?? 0.0;
+    final List last7Raw = income['last7Days'] ?? [];
+    final filledLast7 = fillLast7Days(last7Raw);
+
+    setState(() {
+      last7DaysRevenue.clear();
+      for (var day in filledLast7) {
+        last7DaysRevenue.add({
+          'date': day['date'],
+          'dayRevenue': day['dayRevenue'],
+          'monthRevenue': monthRevenue,
+        });
+      }
+    });
+  }
+
+
+  /// 補齊 7 天資料（沒有收入的填 0）
+  List<Map<String, dynamic>> fillLast7Days(List<dynamic> rawDays) {
+    final today = DateTime.now();
+    final Map<String, Map<String, dynamic>> dayMap = {
+      for (var d in rawDays)
+        d['date']: {'dayRevenue': (d['income'] as num?)?.toDouble() ?? 0.0}
+    };
+
+    final List<Map<String, dynamic>> result = [];
+    for (int i = 6; i >= 0; i--) {
+      final date = today.subtract(Duration(days: i));
+      final dateStr = date.toIso8601String().split('T')[0];
+      result.add({
+        'date': dateStr,
+        'dayRevenue': dayMap[dateStr]?['dayRevenue'] ?? 0.0,
+      });
+    }
+    return result;
+  }
+
+  Future<void> fetchRevenue() async {
+    final result = await ApiService.getDeviceRevenue(widget.site['serial_number']);
+    if (result['status'] == 200) {
+      final income = result['data']['income'];
+      if (income != null) {
+        final monthRevenue = (income['month'] as num?)?.toDouble() ?? 0.0;
+        final List last7Raw = income['last7Days'] ?? [];
+        final filledLast7 = fillLast7Days(last7Raw);
+
+        last7DaysRevenue.clear();
+        for (var day in filledLast7) {
+          last7DaysRevenue.add({
+            'date': day['date'],          // 保留日期
+            'dayRevenue': day['dayRevenue'],
+            'monthRevenue': monthRevenue,
+          });
+        }
+
+      }
+      if (mounted) setState(() {});
+    }
   }
 
   Future<void> _loadSavedTargetsAndSetState() async {
@@ -79,13 +138,14 @@ class _RevenuePageWidgetState extends State<RevenuePageWidget>
     final income = widget.site['data']?['income'];
     if (income == null) return;
 
-    final List last7 = income['last7Days'] ?? [];
     final monthRevenue = (income['month'] as num?)?.toDouble() ?? 0.0;
+    final List last7Raw = income['last7Days'] ?? [];
+    final filledLast7 = fillLast7Days(last7Raw);
 
     last7DaysRevenue.clear();
-    for (var day in last7) {
+    for (var day in filledLast7) {
       last7DaysRevenue.add({
-        'dayRevenue': (day['income'] as num?)?.toDouble() ?? 0.0,
+        'dayRevenue': day['dayRevenue'],
         'monthRevenue': monthRevenue,
       });
     }
@@ -93,14 +153,8 @@ class _RevenuePageWidgetState extends State<RevenuePageWidget>
     if (mounted) setState(() {});
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
   void openSettings() async {
-    final result = await Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => SettingPageWidget(
@@ -108,19 +162,25 @@ class _RevenuePageWidgetState extends State<RevenuePageWidget>
           serialNum: widget.site['serial_number'],
           initialDailyTarget: dailyTarget ?? 80,
           initialMonthlyTarget: monthlyTarget ?? 1000,
+          onTargetsChanged: _updateTargets,
         ),
       ),
     );
 
-    await _loadSavedTargetsAndSetState();
+    // 重新讀取 SharedPreferences 並 setState
+    final prefs = await SharedPreferences.getInstance();
+    final newDaily = prefs.getInt('${widget.site['serial_number']}_dailyTarget') ?? 80;
+    final newMonthly = prefs.getInt('${widget.site['serial_number']}_monthlyTarget') ?? 1000;
 
-    if (result != null) {
-      setState(() {
-        dailyTarget = result['dailyTarget'];
-        monthlyTarget = result['monthlyTarget'];
-      });
-    }
+    if (!mounted) return;
+
+    setState(() {
+      dailyTarget = newDaily;
+      monthlyTarget = newMonthly;
+    });
   }
+
+
 
   Color neonColor(bool isDark, String type) {
     switch (type) {
@@ -170,11 +230,12 @@ class _RevenuePageWidgetState extends State<RevenuePageWidget>
   Widget buildBarChartWithBorder(bool isDark) {
     if (dailyTarget == null || last7DaysRevenue.isEmpty) return const SizedBox();
 
-    // 計算最大值，保證目標線可見
     final maxDayRevenue = last7DaysRevenue
         .map((e) => (e['dayRevenue'] as double?)?.toInt() ?? 0)
         .reduce((a, b) => a > b ? a : b);
-    final maxY = (dailyTarget! > maxDayRevenue ? dailyTarget! + 10 : maxDayRevenue + 10).toDouble();
+    final maxY =
+        (dailyTarget! > maxDayRevenue ? dailyTarget! + 10 : maxDayRevenue + 10)
+            .toDouble();
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -233,8 +294,15 @@ class _RevenuePageWidgetState extends State<RevenuePageWidget>
                         enabled: true,
                         touchTooltipData: BarTouchTooltipData(
                           getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                            final dateStr = last7DaysRevenue[groupIndex]['date'] as String?;
+                            String formattedDate = "";
+                            if (dateStr != null) {
+                              final date = DateTime.tryParse(dateStr);
+                              if (date != null) formattedDate = "${date.month}/${date.day}";
+                            }
+
                             return BarTooltipItem(
-                              "${S.of(context)!.day} ${groupIndex + 1}: ${rod.toY.toInt()} ${S.of(context)!.currency}",
+                              "$formattedDate: ${rod.toY.toInt()} ${S.of(context)!.currency}",
                               const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -263,9 +331,17 @@ class _RevenuePageWidgetState extends State<RevenuePageWidget>
                             showTitles: true,
                             getTitlesWidget: (value, meta) {
                               int index = value.toInt();
-                              if (index < 0 || index >= 7) return const SizedBox();
+                              if (index < 0 || index >= last7DaysRevenue.length) return const SizedBox();
+
+                              final dateStr = last7DaysRevenue[index]['date'] as String?;
+                              if (dateStr == null) return const SizedBox();
+
+                              final date = DateTime.tryParse(dateStr);
+                              if (date == null) return const SizedBox();
+
+                              final formatted = "${date.month}/${date.day}"; // 顯示 MM/DD
                               return Text(
-                                "${S.of(context)!.dayShort}${index + 1}",
+                                formatted,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: isDark ? Colors.white70 : Colors.black54,
@@ -275,6 +351,7 @@ class _RevenuePageWidgetState extends State<RevenuePageWidget>
                             reservedSize: 28,
                           ),
                         ),
+
                         rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                         topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                       ),
@@ -340,8 +417,8 @@ class _RevenuePageWidgetState extends State<RevenuePageWidget>
         ),
       ),
     );
-    }
-    
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isDark = ThemeProvider.themeMode.value == ThemeMode.dark;

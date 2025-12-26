@@ -523,4 +523,7 @@ class SEn extends S {
 
   @override
   String get deleteFailed => 'Delete failed';
+
+  @override
+  String get average => 'Average';
 }

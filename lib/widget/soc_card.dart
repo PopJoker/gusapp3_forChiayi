@@ -54,8 +54,8 @@ class _SOCCircleState extends State<SOCCircle> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
     final mainColor = widget.isCharging
-        ? (isDark ? const Color(0xff5cff59) : const Color(0xff11cd00))
-        : (isDark ? Colors.blue.shade700 : Colors.blue.shade800);
+        ? (isDark ? const Color(0xff5cff59) : const ui.Color.fromARGB(255, 15, 180, 0))
+        : (isDark ? Colors.blue.shade700 : const ui.Color.fromARGB(255, 22, 108, 207));
 
     List<Widget> dataItems = [
       _DataItem(
@@ -184,7 +184,7 @@ class _SOCPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
-    final radius = size.width / 2 - 16;
+    final radius = size.width / 2;
 
     // 外圈光暈
     for (int i = 0; i < 3; i++) {

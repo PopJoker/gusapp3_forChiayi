@@ -218,5 +218,6 @@
   "confirmDeleteAccount": "Are you sure you want to delete your account?",
   "delete": "Delete",
   "accountDeletedSuccessfully": "Account deleted successfully",
-  "deleteFailed": "Delete failed"
+  "deleteFailed": "Delete failed",
+  "average": "Average"
 }

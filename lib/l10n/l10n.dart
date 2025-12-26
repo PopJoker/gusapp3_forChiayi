@@ -1090,6 +1090,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Delete failed'**
   String get deleteFailed;
+
+  /// No description provided for @average.
+  ///
+  /// In en, this message translates to:
+  /// **'Average'**
+  String get average;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {
