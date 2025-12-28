@@ -54,8 +54,12 @@ class _SOCCircleState extends State<SOCCircle> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
     final mainColor = widget.isCharging
-        ? (isDark ? const Color(0xff5cff59) : const ui.Color.fromARGB(255, 15, 180, 0))
-        : (isDark ? Colors.blue.shade700 : const ui.Color.fromARGB(255, 22, 108, 207));
+        ? (isDark
+              ? const Color(0xff5cff59)
+              : const ui.Color.fromARGB(255, 15, 180, 0))
+        : (isDark
+              ? Colors.blue.shade700
+              : const ui.Color.fromARGB(255, 22, 108, 207));
 
     List<Widget> dataItems = [
       _DataItem(
@@ -200,7 +204,8 @@ class _SOCPainter extends CustomPainter {
 
     // 波浪
     double soc = double.tryParse(data["SOC"]?.toString() ?? '0') ?? 0;
-    double baseY = size.height * (1 - soc / 100);
+    double offset = 40; // 往上偏移量
+    double baseY = size.height * (1 - soc / 120) - offset;
 
     List<Map<String, dynamic>> waves = [
       {"height": 6.0, "count": 1.0, "speed": 0.0, "opacity": 0.2},

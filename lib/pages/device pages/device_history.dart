@@ -52,13 +52,11 @@ class _HistoryDataWidgetState extends State<HistoryDataWidget> {
     });
   }
 
-
   @override
   void dispose() {
     RealtimeService().unsubscribe(widget.serialNum, _onDataReceived);
     super.dispose();
   }
-
 
   Future<void> _fetchData() async {
     final result = await ApiService.getDeviceSummary(widget.serialNum);
@@ -114,10 +112,7 @@ class _HistoryDataWidgetState extends State<HistoryDataWidget> {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12),
           child: Column(
-            children: [
-              _buildSocChart(isDark),
-              _buildPowerChart(isDark),
-            ],
+            children: [_buildSocChart(isDark), _buildPowerChart(isDark)],
           ),
         ),
       ),
@@ -125,51 +120,60 @@ class _HistoryDataWidgetState extends State<HistoryDataWidget> {
   }
 
   /// --- SOC 線圖（每個 Storage + 平均線 + 圖例） ---
-Widget _buildSocChart(bool isDark) {
-  if (hourlySoc.isEmpty) return const SizedBox.shrink();
+  Widget _buildSocChart(bool isDark) {
+    if (hourlySoc.isEmpty) return const SizedBox.shrink();
 
-  List<Map<String, dynamic>> sortedData = List.from(hourlySoc)
-    ..sort((a, b) => DateTime.parse(a['timestamp']).compareTo(DateTime.parse(b['timestamp'])));
+    List<Map<String, dynamic>> sortedData = List.from(hourlySoc)
+      ..sort(
+        (a, b) => DateTime.parse(
+          a['timestamp'],
+        ).compareTo(DateTime.parse(b['timestamp'])),
+      );
 
-  // 找出所有 Storage 名稱
-  List<String> storages = [];
-  if (sortedData.isNotEmpty) {
-    sortedData.first.keys.forEach((k) {
-      if (k.endsWith('_soc')) storages.add(k);
-    });
-  }
+    // 找出所有 Storage 名稱
+    List<String> storages = [];
+    if (sortedData.isNotEmpty) {
+      sortedData.first.keys.forEach((k) {
+        if (k.endsWith('_soc')) storages.add(k);
+      });
+    }
 
-  // 每個 Storage 的 FlSpot
-  Map<String, List<FlSpot>> storageSpots = {};
-  storages.forEach((s) {
-    storageSpots[s] = sortedData.asMap().entries.map((e) {
-      double x = e.key.toDouble();
-      double y = (e.value[s] ?? 0).toDouble();
-      return FlSpot(x, y);
-    }).toList();
-  });
-
-  // 平均線
-  List<FlSpot> avgSpots = sortedData.asMap().entries.map((e) {
-    double x = e.key.toDouble();
-    double sum = 0;
-    int count = 0;
+    // 每個 Storage 的 FlSpot
+    Map<String, List<FlSpot>> storageSpots = {};
     storages.forEach((s) {
-      if (e.value[s] != null) {
-        sum += (e.value[s] as num).toDouble();
-        count++;
-      }
+      storageSpots[s] = sortedData.asMap().entries.map((e) {
+        double x = e.key.toDouble();
+        double y = (e.value[s] ?? 0).toDouble();
+        return FlSpot(x, y);
+      }).toList();
     });
-    return FlSpot(x, count > 0 ? sum / count : 0);
-  }).toList();
 
-  Color bgColor = isDark ? Colors.grey[900]! : Colors.white;
-  Color shadowColor = isDark ? Colors.black54 : Colors.grey.withOpacity(0.2);
+    // 平均線
+    List<FlSpot> avgSpots = sortedData.asMap().entries.map((e) {
+      double x = e.key.toDouble();
+      double sum = 0;
+      int count = 0;
+      storages.forEach((s) {
+        if (e.value[s] != null) {
+          sum += (e.value[s] as num).toDouble();
+          count++;
+        }
+      });
+      return FlSpot(x, count > 0 ? sum / count : 0);
+    }).toList();
 
-  // 顏色對應 Storage
-  List<Color> storageColors = [const Color.fromARGB(255, 252, 49, 252), Colors.blue, Colors.green, Colors.orange];
+    Color bgColor = isDark ? Colors.grey[900]! : Colors.white;
+    Color shadowColor = isDark ? Colors.black54 : Colors.grey.withOpacity(0.2);
 
-  return _buildChartContainer(
+    // 顏色對應 Storage
+    List<Color> storageColors = [
+      const Color.fromARGB(255, 252, 49, 252),
+      Colors.blue,
+      Colors.green,
+      Colors.orange,
+    ];
+
+    return _buildChartContainer(
       bgColor,
       shadowColor,
       title: S.of(context)!.socChart,
@@ -180,10 +184,17 @@ Widget _buildSocChart(bool isDark) {
             height: 220,
             child: LineChart(
               LineChartData(
-                minY: 0,      
+                minY: 0,
                 maxY: 100,
-                gridData: FlGridData(show: false),
-                borderData: FlBorderData(show: false),
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: 20,
+                ),
+                borderData: FlBorderData(
+                  show: true,
+                  border: Border.all(color: Colors.grey),
+                ),
                 titlesData: FlTitlesData(
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
@@ -191,22 +202,51 @@ Widget _buildSocChart(bool isDark) {
                       interval: 1,
                       getTitlesWidget: (value, meta) {
                         int index = value.toInt();
-                        if (index < 0 || index >= sortedData.length) return const SizedBox();
-                        DateTime dt = DateTime.parse(sortedData[index]['timestamp']).toLocal();
-                        return Text(DateFormat('HH:mm').format(dt),
-                            style: TextStyle(color: isDark ? Colors.white70 : Colors.black54, fontSize: 12));
+                        if (index < 0 || index >= sortedData.length)
+                          return const SizedBox();
+                        DateTime dt = DateTime.parse(
+                          sortedData[index]['timestamp'],
+                        ).toLocal();
+                        return Text(
+                          DateFormat('HH:mm').format(dt),
+                          style: TextStyle(
+                            color: isDark ? Colors.white70 : Colors.black54,
+                            fontSize: 12,
+                          ),
+                        );
                       },
                     ),
                   ),
-                  leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      interval: 20,
+                      reservedSize: 35,
+                      getTitlesWidget: (value, meta) {
+                        return Text(
+                          "${value.toInt()}%",
+                          style: TextStyle(
+                            color: isDark ? Colors.white70 : Colors.black54,
+                            fontSize: 12,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  rightTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                 ),
                 lineBarsData: [
                   // 各 Storage 線
                   ...storages.asMap().entries.map((e) {
                     String s = e.value;
-                    Color c = e.key < storageColors.length ? storageColors[e.key] : Colors.grey;
+                    Color c = e.key < storageColors.length
+                        ? storageColors[e.key]
+                        : Colors.grey;
                     return LineChartBarData(
                       spots: storageSpots[s]!,
                       isCurved: true,
@@ -236,13 +276,20 @@ Widget _buildSocChart(bool isDark) {
             children: [
               ...storages.asMap().entries.map((e) {
                 String s = e.value;
-                Color c = e.key < storageColors.length ? storageColors[e.key] : Colors.grey;
+                Color c = e.key < storageColors.length
+                    ? storageColors[e.key]
+                    : Colors.grey;
                 return Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(width: 12, height: 12, color: c),
                     const SizedBox(width: 4),
-                    Text(s.replaceAll('_soc', ''), style: TextStyle(color: isDark ? Colors.white70 : Colors.black54)),
+                    Text(
+                      s.replaceAll('_soc', ''),
+                      style: TextStyle(
+                        color: isDark ? Colors.white70 : Colors.black54,
+                      ),
+                    ),
                   ],
                 );
               }),
@@ -252,7 +299,12 @@ Widget _buildSocChart(bool isDark) {
                 children: [
                   Container(width: 12, height: 2, color: Colors.grey),
                   const SizedBox(width: 4),
-                  Text(S.of(context)!.average, style: TextStyle(color: isDark ? Colors.white70 : Colors.black54)),
+                  Text(
+                    S.of(context)!.average,
+                    style: TextStyle(
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -261,7 +313,6 @@ Widget _buildSocChart(bool isDark) {
       ),
     );
   }
-
 
   /// --- Charge / Discharge 柱狀圖 ---
   Widget _buildPowerChart(bool isDark) {
@@ -288,22 +339,45 @@ Widget _buildSocChart(bool isDark) {
                   showTitles: true,
                   getTitlesWidget: (value, meta) {
                     int index = value.toInt();
-                    if (index < 0 || index >= historyData.length) return const SizedBox();
-                    DateTime dt = DateTime.tryParse(historyData[index]['date'])?.toLocal() ?? DateTime.now();
-                    return Text("${dt.month}/${dt.day}", style: TextStyle(color: isDark ? Colors.white70 : Colors.black54, fontSize: 12));
+                    if (index < 0 || index >= historyData.length)
+                      return const SizedBox();
+                    DateTime dt =
+                        DateTime.tryParse(
+                          historyData[index]['date'],
+                        )?.toLocal() ??
+                        DateTime.now();
+                    return Text(
+                      "${dt.month}/${dt.day}",
+                      style: TextStyle(
+                        color: isDark ? Colors.white70 : Colors.black54,
+                        fontSize: 12,
+                      ),
+                    );
                   },
                 ),
               ),
               leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              rightTitles: AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
               topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
             ),
             barGroups: historyData.asMap().entries.map((e) {
               return BarChartGroupData(
                 x: e.key,
                 barRods: [
-                  BarChartRodData(toY: e.value['ChargePower'].toDouble(), color: neonColor(isDark, 'ChargePower'), width: 14, borderRadius: BorderRadius.circular(6)),
-                  BarChartRodData(toY: e.value['DischargePower'].toDouble(), color: neonColor(isDark, 'DischargePower'), width: 14, borderRadius: BorderRadius.circular(6)),
+                  BarChartRodData(
+                    toY: e.value['ChargePower'].toDouble(),
+                    color: neonColor(isDark, 'ChargePower'),
+                    width: 14,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  BarChartRodData(
+                    toY: e.value['DischargePower'].toDouble(),
+                    color: neonColor(isDark, 'DischargePower'),
+                    width: 14,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
                 ],
               );
             }).toList(),
@@ -317,7 +391,10 @@ Widget _buildSocChart(bool isDark) {
   Widget _buildRevenueChart(bool isDark) {
     if (historyData.isEmpty) return const SizedBox.shrink();
 
-    double totalRevenue = historyData.fold(0, (sum, e) => sum + (e['Revenue'] as double));
+    double totalRevenue = historyData.fold(
+      0,
+      (sum, e) => sum + (e['Revenue'] as double),
+    );
 
     Color bgColor = isDark ? Colors.grey[900]! : Colors.white;
     Color shadowColor = isDark ? Colors.black54 : Colors.grey.withOpacity(0.2);
@@ -325,7 +402,8 @@ Widget _buildSocChart(bool isDark) {
     return _buildChartContainer(
       bgColor,
       shadowColor,
-      title: "${S.of(context)!.revenueChart} ${S.of(context)!.totalRevenue}: ${totalRevenue.toStringAsFixed(1)} ${S.of(context)!.currency}",
+      title:
+          "${S.of(context)!.revenueChart} ${S.of(context)!.totalRevenue}: ${totalRevenue.toStringAsFixed(1)} ${S.of(context)!.currency}",
       titleColor: neonColor(isDark, 'Revenue'),
       child: SizedBox(
         height: 220,
@@ -340,21 +418,39 @@ Widget _buildSocChart(bool isDark) {
                   showTitles: true,
                   getTitlesWidget: (value, meta) {
                     int index = value.toInt();
-                    if (index < 0 || index >= historyData.length) return const SizedBox();
-                    DateTime dt = DateTime.tryParse(historyData[index]['date'])?.toLocal() ?? DateTime.now();
-                    return Text("${dt.month}/${dt.day}", style: TextStyle(color: isDark ? Colors.white70 : Colors.black54, fontSize: 12));
+                    if (index < 0 || index >= historyData.length)
+                      return const SizedBox();
+                    DateTime dt =
+                        DateTime.tryParse(
+                          historyData[index]['date'],
+                        )?.toLocal() ??
+                        DateTime.now();
+                    return Text(
+                      "${dt.month}/${dt.day}",
+                      style: TextStyle(
+                        color: isDark ? Colors.white70 : Colors.black54,
+                        fontSize: 12,
+                      ),
+                    );
                   },
                 ),
               ),
               leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              rightTitles: AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
               topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
             ),
             barGroups: historyData.asMap().entries.map((e) {
               return BarChartGroupData(
                 x: e.key,
                 barRods: [
-                  BarChartRodData(toY: e.value['Revenue'].toDouble(), color: neonColor(isDark, 'Revenue'), width: 18, borderRadius: BorderRadius.circular(6)),
+                  BarChartRodData(
+                    toY: e.value['Revenue'].toDouble(),
+                    color: neonColor(isDark, 'Revenue'),
+                    width: 18,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
                 ],
               );
             }).toList(),
@@ -365,20 +461,42 @@ Widget _buildSocChart(bool isDark) {
   }
 
   /// --- 共用 Chart 容器 ---
-  Widget _buildChartContainer(Color bgColor, Color shadowColor, {required String title, required Color titleColor, required Widget child}) {
+  Widget _buildChartContainer(
+    Color bgColor,
+    Color shadowColor, {
+    required String title,
+    required Color titleColor,
+    required Widget child,
+  }) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: shadowColor, blurRadius: 12, offset: const Offset(0, 6))],
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor,
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: titleColor)),
-        const SizedBox(height: 12),
-        child,
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: titleColor,
+            ),
+          ),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
     );
   }
 }

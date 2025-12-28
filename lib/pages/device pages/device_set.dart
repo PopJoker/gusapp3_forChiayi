@@ -15,7 +15,7 @@ class SettingPageWidget extends StatefulWidget {
     required this.serialNum,
     this.initialDailyTarget = 80,
     this.initialMonthlyTarget = 1000,
-    this.onTargetsChanged
+    this.onTargetsChanged,
   });
 
   final String model;
@@ -53,7 +53,11 @@ class _SettingPageWidgetState extends State<SettingPageWidget> {
     _updateFrequency = _realtime.getFrequency(widget.serialNum);
 
     if (_isRealtimeEnabled) {
-      _realtime.start(widget.serialNum, widget.model, intervalSec: _updateFrequency);
+      _realtime.start(
+        widget.serialNum,
+        widget.model,
+        intervalSec: _updateFrequency,
+      );
     }
     _realtime.subscribe(widget.serialNum, (_) {});
 
@@ -63,10 +67,15 @@ class _SettingPageWidgetState extends State<SettingPageWidget> {
 
   Future<void> _loadSavedTargets() async {
     final prefs = await SharedPreferences.getInstance();
-    int savedDaily = prefs.getInt('${widget.serialNum}_dailyTarget') ?? widget.initialDailyTarget;
-    int savedMonthly = prefs.getInt('${widget.serialNum}_monthlyTarget') ?? widget.initialMonthlyTarget;
+    int savedDaily =
+        prefs.getInt('${widget.serialNum}_dailyTarget') ??
+        widget.initialDailyTarget;
+    int savedMonthly =
+        prefs.getInt('${widget.serialNum}_monthlyTarget') ??
+        widget.initialMonthlyTarget;
 
-    _isRealtimeEnabled = prefs.getBool('${widget.serialNum}_realtimeEnabled') ?? false;
+    _isRealtimeEnabled =
+        prefs.getBool('${widget.serialNum}_realtimeEnabled') ?? false;
     _updateFrequency = prefs.getInt('${widget.serialNum}_updateFrequency') ?? 5;
 
     _dailyTargetController.text = savedDaily.toString();
@@ -82,8 +91,11 @@ class _SettingPageWidgetState extends State<SettingPageWidget> {
   }
 
   void _saveDailyMonthlyTargets() {
-    int daily = int.tryParse(_dailyTargetController.text) ?? widget.initialDailyTarget;
-    int monthly = int.tryParse(_monthlyTargetController.text) ?? widget.initialMonthlyTarget;
+    int daily =
+        int.tryParse(_dailyTargetController.text) ?? widget.initialDailyTarget;
+    int monthly =
+        int.tryParse(_monthlyTargetController.text) ??
+        widget.initialMonthlyTarget;
     _saveTargets(daily, monthly);
   }
 
@@ -91,7 +103,11 @@ class _SettingPageWidgetState extends State<SettingPageWidget> {
     setState(() {
       _isRealtimeEnabled = val;
       if (val) {
-        _realtime.start(widget.serialNum, widget.model, intervalSec: _updateFrequency);
+        _realtime.start(
+          widget.serialNum,
+          widget.model,
+          intervalSec: _updateFrequency,
+        );
       } else {
         _realtime.stop(widget.serialNum);
       }
@@ -141,7 +157,10 @@ class _SettingPageWidgetState extends State<SettingPageWidget> {
         hintStyle: TextStyle(color: hintColor),
         filled: true,
         fillColor: fillColor,
-        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 16,
+          horizontal: 20,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
           borderSide: BorderSide(color: accentColor, width: 2),
@@ -157,12 +176,14 @@ class _SettingPageWidgetState extends State<SettingPageWidget> {
       ),
     );
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final s = S.of(context)!;
     bool isDark = Theme.of(context).brightness == Brightness.dark;
-    Color neonPink = isDark ? const Color.fromARGB(255, 0, 255, 38) : const Color.fromARGB(255, 2, 161, 47);
+    Color neonPink = isDark
+        ? const Color.fromARGB(255, 0, 255, 38)
+        : const Color.fromARGB(255, 2, 161, 47);
     Color neonCyan = isDark ? Colors.white : Colors.black;
 
     return Scaffold(
@@ -198,13 +219,19 @@ class _SettingPageWidgetState extends State<SettingPageWidget> {
             child: Column(
               children: [
                 SwitchListTile(
-                  title: Text(s.enableRealtime, style: TextStyle(color: neonCyan)),
+                  title: Text(
+                    s.enableRealtime,
+                    style: TextStyle(color: neonCyan),
+                  ),
                   value: _isRealtimeEnabled,
                   activeColor: neonPink,
                   onChanged: _toggleRealtime,
                 ),
                 ListTile(
-                  title: Text(s.updateFrequency, style: TextStyle(color: neonCyan)),
+                  title: Text(
+                    s.updateFrequency,
+                    style: TextStyle(color: neonCyan),
+                  ),
                   trailing: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     decoration: BoxDecoration(
@@ -248,7 +275,10 @@ class _SettingPageWidgetState extends State<SettingPageWidget> {
                       if (locale != null) LocaleProvider.changeLocale(locale);
                     },
                     items: const [
-                      DropdownMenuItem(value: Locale('en'), child: Text('English')),
+                      DropdownMenuItem(
+                        value: Locale('en'),
+                        child: Text('English'),
+                      ),
                       DropdownMenuItem(value: Locale('zh'), child: Text('中文')),
                     ],
                   );
@@ -294,20 +324,26 @@ class _SettingPageWidgetState extends State<SettingPageWidget> {
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () async {
-                        final daily = int.tryParse(_dailyTargetController.text) ?? widget.initialDailyTarget;
-                        final monthly = int.tryParse(_monthlyTargetController.text) ?? widget.initialMonthlyTarget;
+                        final daily =
+                            int.tryParse(_dailyTargetController.text) ??
+                            widget.initialDailyTarget;
+                        final monthly =
+                            int.tryParse(_monthlyTargetController.text) ??
+                            widget.initialMonthlyTarget;
 
                         await _saveTargets(daily, monthly);
 
                         // 立即回傳
                         widget.onTargetsChanged?.call(daily, monthly);
 
-                        FloatingMessage.show(context, s.success, autoHide: true);
+                        FloatingMessage.show(
+                          context,
+                          s.success,
+                          autoHide: true,
+                        );
                       },
                       child: Text(s.save),
-                    )
-
-
+                    ),
                   ],
                 ),
               ),
