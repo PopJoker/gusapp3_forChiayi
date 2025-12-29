@@ -261,11 +261,6 @@ class _DataHomePageState extends State<DataHomePage>
                                   setState(() {
                                     _currentIndex = index;
                                     _menuWidth = _minWidth;
-
-                                    if (_menuTitles[index] ==
-                                        S.of(context)!.deviceRevenue) {
-                                      _revenuePageKey = UniqueKey();
-                                    }
                                   });
                                 },
                               );
