@@ -322,28 +322,77 @@ class _SettingPageWidgetState extends State<SettingPageWidget> {
                       keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () async {
-                        final daily =
-                            int.tryParse(_dailyTargetController.text) ??
-                            widget.initialDailyTarget;
-                        final monthly =
-                            int.tryParse(_monthlyTargetController.text) ??
-                            widget.initialMonthlyTarget;
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: _isSaving
+                          ? null
+                          : () async {
+                              setState(() => _isSaving = true);
 
-                        await _saveTargets(daily, monthly);
+                              final daily =
+                                  int.tryParse(_dailyTargetController.text) ??
+                                  widget.initialDailyTarget;
+                              final monthly =
+                                  int.tryParse(_monthlyTargetController.text) ??
+                                  widget.initialMonthlyTarget;
 
-                        // 立即回傳
-                        widget.onTargetsChanged?.call(daily, monthly);
+                              await _saveTargets(daily, monthly);
 
-                        FloatingMessage.show(
-                          context,
-                          s.success,
-                          autoHide: true,
-                        );
-                      },
-                      child: Text(s.save),
+                              widget.onTargetsChanged?.call(daily, monthly);
+
+                              FloatingMessage.show(
+                                context,
+                                s.success,
+                                autoHide: true,
+                              );
+
+                              setState(() => _isSaving = false);
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        foregroundColor: neonPink,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          side: BorderSide(
+                            color: neonPink,
+                            width: 2,
+                          ),
+                        ),
+                      ).copyWith(
+                        overlayColor: MaterialStateProperty.resolveWith<Color?>(
+                          (states) {
+                            if (states.contains(MaterialState.pressed)) {
+                              return neonPink.withOpacity(0.15);
+                            }
+                            if (states.contains(MaterialState.hovered)) {
+                              return neonPink.withOpacity(0.08);
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      child: _isSaving
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: neonPink,
+                              ),
+                            )
+                          : Text(
+                              s.save,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
                     ),
+                  ),
                   ],
                 ),
               ),
