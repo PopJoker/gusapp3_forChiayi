@@ -8,6 +8,7 @@ import 'device_log.dart';
 import '../../utils/theme_colors.dart';
 import '../../l10n/l10n.dart';
 import '../../global.dart';
+import 'package:flutter/services.dart';
 
 class DataHomePage extends StatefulWidget {
   const DataHomePage({super.key, required this.site});
@@ -36,10 +37,17 @@ class _DataHomePageState extends State<DataHomePage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.immersiveSticky,
+    );
   }
 
   @override
   void dispose() {
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.edgeToEdge,
+    );
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -193,7 +201,6 @@ class _DataHomePageState extends State<DataHomePage>
   @override
   Widget build(BuildContext context) {
     _buildModelMenu(context);
-
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: ThemeProvider.themeMode,
       builder: (context, themeMode, child) {
@@ -228,7 +235,7 @@ class _DataHomePageState extends State<DataHomePage>
               IndexedStack(index: _currentIndex, children: _pages),
 
               Positioned(
-                top: 10,
+                top: 0,
                 left: 0,
                 bottom: 0,
                 child: GestureDetector(
@@ -240,6 +247,7 @@ class _DataHomePageState extends State<DataHomePage>
                           width: _menuWidth,
                           color: menuBase,
                           child: ListView.builder(
+                            padding: EdgeInsets.zero,
                             itemCount: _menuTitles.length,
                             itemBuilder: (context, index) {
                               return ListTile(

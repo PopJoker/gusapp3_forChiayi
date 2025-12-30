@@ -9,6 +9,7 @@ import '../utils/theme_colors.dart';
 import '../l10n/l10n.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import '../global.dart'; // 全局語言管理
+import 'package:flutter/services.dart';
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
@@ -25,6 +26,10 @@ class _AuthPageState extends State<AuthPage> {
   void initState() {
     super.initState();
     _loadSavedSerial();
+    
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.immersiveSticky,
+    );
   }
 
   Future<void> _loadSavedSerial() async {
