@@ -66,7 +66,7 @@ dev_dependencies:
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/GUSlogoBG.png" # 你的 Logo 圖片路徑
+  image_path: "assets/iconforGusEMSO.png" # 你的 Logo 圖片路徑
   adaptive_icon_background: "#ffffff" # 可選，安卓適應性圖示背景色
   remove_alpha_ios: true
 # For information on the generic Dart part of this file, see the
@@ -77,6 +77,7 @@ flutter:
   generate: true
   
   assets:
+    - assets/iconforGusEMSO.png
     - assets/GUSLOGO.png
     - assets/GUSlogoBG.png
     - assets/GUSLOGO2.png
