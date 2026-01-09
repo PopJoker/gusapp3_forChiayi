@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../utils/api_service.dart';
+import 'api_service.dart';
 import 'package:flutter/foundation.dart';
 
 typedef DataCallback = void Function(Map<String, dynamic> data);

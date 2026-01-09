@@ -219,5 +219,13 @@
   "delete": "Delete",
   "accountDeletedSuccessfully": "Account deleted successfully",
   "deleteFailed": "Delete failed",
-  "average": "Average"
+  "average": "Average",
+
+  "charging": "Charging",
+  "discharging": "Discharging",
+  "chargePower": "Charging Power",
+  "dischargePower": "Discharging Power",
+  "viewDetails": "View Details of Each Storage"
+
+
 }

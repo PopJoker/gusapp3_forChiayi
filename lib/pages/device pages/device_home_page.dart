@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'LES/device_data.dart';
 import 'HES/device_data.dart';
+import 'LES/device_summary.dart';
 import 'device_history.dart';
 import 'device_money.dart';
 import 'device_set.dart';
@@ -96,7 +97,7 @@ class _DataHomePageState extends State<DataHomePage>
         ];
 
         _pages = [
-          DeviceDataWidget(
+          DeviceSummaryWidget(
             model: widget.site['model'] ?? "未知型號",
             serialNum: widget.site['serial_number'] ?? "0000",
           ),
@@ -244,37 +245,47 @@ class _DataHomePageState extends State<DataHomePage>
                   onHorizontalDragEnd: _onHorizontalDragEnd,
                   child: _isFullyExpanded
                       ? Container(
-                          width: _menuWidth,
-                          color: menuBase,
-                          child: ListView.builder(
-                            padding: EdgeInsets.zero,
-                            itemCount: _menuTitles.length,
-                            itemBuilder: (context, index) {
-                              return ListTile(
-                                leading: Icon(
-                                  _menuIcons[index],
-                                  color: _currentIndex == index
-                                      ? menuActive
-                                      : menuInactive,
-                                ),
-                                title: Text(
-                                  _menuTitles[index],
-                                  style: TextStyle(
+                        width: _menuWidth,
+                        color: menuBase,
+                        child: Column(
+                          children: [
+                            const Spacer(),
+
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _menuTitles.length,
+                              itemBuilder: (context, index) {
+                                return ListTile(
+                                  leading: Icon(
+                                    _menuIcons[index],
                                     color: _currentIndex == index
                                         ? menuActive
                                         : menuInactive,
                                   ),
-                                ),
-                                onTap: () {
-                                  setState(() {
-                                    _currentIndex = index;
-                                    _menuWidth = _minWidth;
-                                  });
-                                },
-                              );
-                            },
-                          ),
-                        )
+                                  title: Text(
+                                    _menuTitles[index],
+                                    style: TextStyle(
+                                      color: _currentIndex == index
+                                          ? menuActive
+                                          : menuInactive,
+                                    ),
+                                  ),
+                                  onTap: () {
+                                    setState(() {
+                                      _currentIndex = index;
+                                      _menuWidth = _minWidth;
+                                    });
+                                  },
+                                );
+                              },
+                            ),
+
+                            const Spacer(),
+                          ],
+                        ),
+                      )
+
                       : Container(
                           width: 44,
                           height: 44,

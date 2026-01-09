@@ -1096,6 +1096,36 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Average'**
   String get average;
+
+  /// No description provided for @charging.
+  ///
+  /// In en, this message translates to:
+  /// **'Charging'**
+  String get charging;
+
+  /// No description provided for @discharging.
+  ///
+  /// In en, this message translates to:
+  /// **'Discharging'**
+  String get discharging;
+
+  /// No description provided for @chargePower.
+  ///
+  /// In en, this message translates to:
+  /// **'Charging Power'**
+  String get chargePower;
+
+  /// No description provided for @dischargePower.
+  ///
+  /// In en, this message translates to:
+  /// **'Discharging Power'**
+  String get dischargePower;
+
+  /// No description provided for @viewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'View Details of Each Storage'**
+  String get viewDetails;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

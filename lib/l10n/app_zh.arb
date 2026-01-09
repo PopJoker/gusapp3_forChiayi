@@ -220,5 +220,12 @@
   "delete": "刪除",
   "accountDeletedSuccessfully": "帳號已刪除",
   "deleteFailed": "刪除失敗",
-  "average": "平均"
+  "average": "平均",
+
+  "charging": "充電",
+  "discharging": "放電",
+  "chargePower": "充電功率",
+  "dischargePower": "放電功率",
+  "viewDetails": "查看各櫃資訊"
+
 }

@@ -526,4 +526,19 @@ class SEn extends S {
 
   @override
   String get average => 'Average';
+
+  @override
+  String get charging => 'Charging';
+
+  @override
+  String get discharging => 'Discharging';
+
+  @override
+  String get chargePower => 'Charging Power';
+
+  @override
+  String get dischargePower => 'Discharging Power';
+
+  @override
+  String get viewDetails => 'View Details of Each Storage';
 }

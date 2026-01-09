@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../l10n/l10n.dart';
+import '../l10n/l10n.dart';
 
 Future<bool?> showCyberpunkConfirmDialog({
   required BuildContext context,

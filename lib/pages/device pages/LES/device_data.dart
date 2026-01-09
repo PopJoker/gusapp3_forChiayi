@@ -60,7 +60,7 @@ class _DeviceDataWidgetState extends State<DeviceDataWidget> {
       );
       if (result['status'] == 200) {
         setState(() {
-          allStorages = Map<String, dynamic>.from(result['data']);
+          allStorages = Map<String, dynamic>.from(result['data']['storageData']);
           fakeData = allStorages[selectedStorage] ?? {};
         });
       }

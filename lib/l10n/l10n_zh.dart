@@ -526,4 +526,19 @@ class SZh extends S {
 
   @override
   String get average => '平均';
+
+  @override
+  String get charging => '充電';
+
+  @override
+  String get discharging => '放電';
+
+  @override
+  String get chargePower => '充電功率';
+
+  @override
+  String get dischargePower => '放電功率';
+
+  @override
+  String get viewDetails => '查看各櫃資訊';
 }

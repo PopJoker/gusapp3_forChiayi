@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../utils/theme_colors.dart';
+import '../utils/theme_colors.dart';
 
 class FloatingMessage {
   static OverlayEntry? _currentEntry; // 管理當前浮動訊息
