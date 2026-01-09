@@ -11,6 +11,55 @@ import '../../l10n/l10n.dart';
 import '../../global.dart';
 import 'package:flutter/services.dart';
 
+/// =========================
+/// 外層 Wrapper 控制整頁刷新
+/// =========================
+class DataHomePageWrapper extends StatefulWidget {
+  final Map<String, dynamic> site;
+  const DataHomePageWrapper({super.key, required this.site});
+
+  @override
+  State<DataHomePageWrapper> createState() => _DataHomePageWrapperState();
+}
+
+class _DataHomePageWrapperState extends State<DataHomePageWrapper>
+    with WidgetsBindingObserver {
+  Key _pageKey = UniqueKey();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // App 從背景回到前景，刷新整個頁面
+      setState(() {
+        _pageKey = UniqueKey();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DataHomePage(
+      key: _pageKey,
+      site: widget.site,
+    );
+  }
+}
+
+/// =========================
+/// 原本的 DataHomePage
+/// =========================
 class DataHomePage extends StatefulWidget {
   const DataHomePage({super.key, required this.site});
   final Map<String, dynamic> site;
@@ -39,20 +88,17 @@ class _DataHomePageState extends State<DataHomePage>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.immersiveSticky,
-    );
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   }
 
   @override
   void dispose() {
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.edgeToEdge,
-    );
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
+  /// 手勢控制側邊欄
   void _onHorizontalDragUpdate(DragUpdateDetails details) {
     setState(() {
       _menuWidth += details.delta.dx;
@@ -75,6 +121,7 @@ class _DataHomePageState extends State<DataHomePage>
     });
   }
 
+  /// 根據機型建立側邊選單與頁面
   void _buildModelMenu(BuildContext context) {
     final model = (widget.site['model'] ?? "").toString().toUpperCase();
 
@@ -105,11 +152,7 @@ class _DataHomePageState extends State<DataHomePage>
             model: widget.site['model'] ?? "未知型號",
             serialNum: widget.site['serial_number'] ?? "0000",
           ),
-
-          // Revenue頁掛Key
           RevenuePageWidget(key: _revenuePageKey, site: widget.site),
-
-          // Setting頁加入 onTargetsChanged 回調
           SettingPageWidget(
             model: widget.site['model'] ?? "未知型號",
             serialNum: widget.site['serial_number'] ?? "0000",
@@ -202,23 +245,16 @@ class _DataHomePageState extends State<DataHomePage>
   @override
   Widget build(BuildContext context) {
     _buildModelMenu(context);
+
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: ThemeProvider.themeMode,
       builder: (context, themeMode, child) {
         bool isDark = themeMode == ThemeMode.dark;
-        Color backgroundStart = isDark
-            ? const Color(0xFF010402)
-            : const Color(0xFFF0FFF0);
-        Color backgroundEnd = isDark
-            ? const Color(0xFF081E12)
-            : const Color(0xFFC8FFC8);
+        Color backgroundStart = isDark ? const Color(0xFF010402) : const Color(0xFFF0FFF0);
+        Color backgroundEnd = isDark ? const Color(0xFF081E12) : const Color(0xFFC8FFC8);
         Color menuBase = isDark ? Colors.black87 : Colors.white70;
-        Color menuActive = isDark
-            ? const Color(0xFF00FF00)
-            : const Color(0xFF00A81C);
-        Color menuInactive = isDark
-            ? const Color.fromARGB(121, 255, 255, 255)
-            : const Color.fromARGB(118, 0, 0, 0);
+        Color menuActive = isDark ? const Color(0xFF00FF00) : const Color(0xFF00A81C);
+        Color menuInactive = isDark ? const Color.fromARGB(121, 255, 255, 255) : const Color.fromARGB(118, 0, 0, 0);
 
         return Scaffold(
           body: Stack(
@@ -232,9 +268,7 @@ class _DataHomePageState extends State<DataHomePage>
                   ),
                 ),
               ),
-
               IndexedStack(index: _currentIndex, children: _pages),
-
               Positioned(
                 top: 0,
                 left: 0,
@@ -245,47 +279,40 @@ class _DataHomePageState extends State<DataHomePage>
                   onHorizontalDragEnd: _onHorizontalDragEnd,
                   child: _isFullyExpanded
                       ? Container(
-                        width: _menuWidth,
-                        color: menuBase,
-                        child: Column(
-                          children: [
-                            const Spacer(),
-
-                            ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _menuTitles.length,
-                              itemBuilder: (context, index) {
-                                return ListTile(
-                                  leading: Icon(
-                                    _menuIcons[index],
-                                    color: _currentIndex == index
-                                        ? menuActive
-                                        : menuInactive,
-                                  ),
-                                  title: Text(
-                                    _menuTitles[index],
-                                    style: TextStyle(
-                                      color: _currentIndex == index
-                                          ? menuActive
-                                          : menuInactive,
+                          width: _menuWidth,
+                          color: menuBase,
+                          child: Column(
+                            children: [
+                              const Spacer(),
+                              ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: _menuTitles.length,
+                                itemBuilder: (context, index) {
+                                  return ListTile(
+                                    leading: Icon(
+                                      _menuIcons[index],
+                                      color: _currentIndex == index ? menuActive : menuInactive,
                                     ),
-                                  ),
-                                  onTap: () {
-                                    setState(() {
-                                      _currentIndex = index;
-                                      _menuWidth = _minWidth;
-                                    });
-                                  },
-                                );
-                              },
-                            ),
-
-                            const Spacer(),
-                          ],
-                        ),
-                      )
-
+                                    title: Text(
+                                      _menuTitles[index],
+                                      style: TextStyle(
+                                        color: _currentIndex == index ? menuActive : menuInactive,
+                                      ),
+                                    ),
+                                    onTap: () {
+                                      setState(() {
+                                        _currentIndex = index;
+                                        _menuWidth = _minWidth;
+                                      });
+                                    },
+                                  );
+                                },
+                              ),
+                              const Spacer(),
+                            ],
+                          ),
+                        )
                       : Container(
                           width: 44,
                           height: 44,

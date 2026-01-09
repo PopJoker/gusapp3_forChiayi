@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../widget/soc_card.dart';
 import '../../../utils/api_service.dart';
 import '../../../l10n/l10n.dart';
@@ -26,17 +27,39 @@ class _DeviceSummaryWidgetState extends State<DeviceSummaryWidget> {
   @override
   void initState() {
     super.initState();
+
     fetchSummaryData();
-    RealtimeService().subscribe(widget.serialNum, _onDataReceived);
+
+    // 讀取 SharedPreferences 來取得更新頻率
+    _loadRealtimeFrequency().then((freq) {
+      RealtimeService().subscribe(widget.serialNum, _onDataReceived);
+
+      if (!RealtimeService().isEnabled(widget.serialNum)) {
+        RealtimeService().start(
+          widget.serialNum,
+          widget.model,
+          intervalSec: freq, // 使用儲存的頻率
+        );
+        debugPrint("Realtime data ON with interval $freq sec");
+      }
+    });
   }
 
-  void _onDataReceived(Map<String, dynamic> data) {
-    if (!mounted) return;
-    if (data.containsKey("summary")) {
-      setState(() {
-        summaryData = Map<String, dynamic>.from(data["summary"]);
-      });
-    }
+  // Helper function 取得頻率
+  Future<int> _loadRealtimeFrequency() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('${widget.serialNum}_updateFrequency') ?? 5;
+  }
+
+
+  void _onDataReceived(Map<String, dynamic>? data) {
+    if (!mounted || data == null) return;
+    debugPrint("Realtime data received: $data");
+    setState(() {
+      // 跟 fetchSummaryData 一樣，全部覆蓋 summaryData
+      summaryData = Map<String, dynamic>.from(data['summary'] ?? {});
+      isLoading = false;
+    });
   }
 
   @override

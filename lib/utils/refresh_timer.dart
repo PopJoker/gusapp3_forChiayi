@@ -59,6 +59,7 @@ class RealtimeService {
     _timers[serialNum] = Timer.periodic(Duration(seconds: sec), (timer) async {
       try {
         final data = await ApiService.getDeviceNowData(model, serialNum);
+        debugPrint("[$serialNum] Timer API result: $data");
         if (_listeners[serialNum] != null) {
           for (var cb in _listeners[serialNum]!) cb(data['data']);
         }

@@ -39,7 +39,8 @@ class _DeviceDataWidgetState extends State<DeviceDataWidget> {
     if (!mounted) return;
 
     setState(() {
-      allStorages = Map<String, dynamic>.from(data);
+      // 將收到的資料全部當作 storageData 覆蓋
+      allStorages = Map<String, dynamic>.from(data['storageData'] ?? {});
       fakeData = allStorages[selectedStorage] ?? {};
     });
   }
