@@ -30,19 +30,20 @@ class _DeviceSummaryWidgetState extends State<DeviceSummaryWidget> {
 
     fetchSummaryData();
 
-    // 讀取 SharedPreferences 來取得更新頻率
     _loadRealtimeFrequency().then((freq) {
-      RealtimeService().subscribe(widget.serialNum, _onDataReceived);
+      final realtime = RealtimeService();
 
-      if (!RealtimeService().isEnabled(widget.serialNum)) {
-        RealtimeService().start(
+      if (!realtime.isEnabled(widget.serialNum)) {
+        realtime.start(
           widget.serialNum,
           widget.model,
-          intervalSec: freq, // 使用儲存的頻率
+          intervalSec: freq,
         );
-        debugPrint("Realtime data ON with interval $freq sec");
       }
+
+      realtime.subscribe(widget.serialNum, _onDataReceived);
     });
+
   }
 
   // Helper function 取得頻率
@@ -54,13 +55,19 @@ class _DeviceSummaryWidgetState extends State<DeviceSummaryWidget> {
 
   void _onDataReceived(Map<String, dynamic>? data) {
     if (!mounted || data == null) return;
-    debugPrint("Realtime data received: $data");
+
+    final incomingSummary = data['summary'];
+    if (incomingSummary is! Map) return;
+
     setState(() {
-      // 跟 fetchSummaryData 一樣，全部覆蓋 summaryData
-      summaryData = Map<String, dynamic>.from(data['summary'] ?? {});
+      summaryData = {
+        ...summaryData, // 保留 API 給的完整資料
+        ...Map<String, dynamic>.from(incomingSummary), // 只覆蓋有變的欄位
+      };
       isLoading = false;
     });
   }
+
 
   @override
   void dispose() {

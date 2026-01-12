@@ -29,11 +29,12 @@ class SettingPageWidget extends StatefulWidget {
 }
 
 class _SettingPageWidgetState extends State<SettingPageWidget> {
-  bool _isRealtimeEnabled = false;
   int _updateFrequency = 5;
   final _realtime = RealtimeService();
+  late final DataCallback _realtimeCallback;
   bool _isSaving = false;
   late bool hideIncome;
+  bool _isRealtimeEnabled = false;
 
   late TextEditingController _dailyTargetController;
   late TextEditingController _monthlyTargetController;
@@ -41,7 +42,7 @@ class _SettingPageWidgetState extends State<SettingPageWidget> {
   @override
   void initState() {
     super.initState();
-
+    _isRealtimeEnabled = _realtime.isEnabled(widget.serialNum);
     _dailyTargetController = TextEditingController();
     _monthlyTargetController = TextEditingController();
 
@@ -49,7 +50,6 @@ class _SettingPageWidgetState extends State<SettingPageWidget> {
 
     _loadSavedTargets();
 
-    _isRealtimeEnabled = _realtime.isEnabled(widget.serialNum);
     _updateFrequency = _realtime.getFrequency(widget.serialNum);
 
     if (_isRealtimeEnabled) {
@@ -59,7 +59,7 @@ class _SettingPageWidgetState extends State<SettingPageWidget> {
         intervalSec: _updateFrequency,
       );
     }
-    _realtime.subscribe(widget.serialNum, (_) {});
+    _realtime.subscribe(widget.serialNum, _realtimeCallback);
 
     _dailyTargetController.addListener(_saveDailyMonthlyTargets);
     _monthlyTargetController.addListener(_saveDailyMonthlyTargets);
@@ -127,7 +127,7 @@ class _SettingPageWidgetState extends State<SettingPageWidget> {
 
   @override
   void dispose() {
-    _realtime.unsubscribe(widget.serialNum, (_) {});
+    _realtime.unsubscribe(widget.serialNum, _realtimeCallback);
     _dailyTargetController.removeListener(_saveDailyMonthlyTargets);
     _dailyTargetController.dispose();
     _monthlyTargetController.dispose();
