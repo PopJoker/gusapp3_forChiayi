@@ -48,6 +48,10 @@ class _SettingPageWidgetState extends State<SettingPageWidget> {
 
     hideIncome = widget.model == 'HES';
 
+    _realtimeCallback = (_) {
+      // Setting page 不處理即時資料
+    };
+
     _loadSavedTargets();
 
     _updateFrequency = _realtime.getFrequency(widget.serialNum);
