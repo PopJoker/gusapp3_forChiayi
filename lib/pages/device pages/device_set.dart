@@ -44,8 +44,8 @@ class _SettingPageWidgetState extends State<SettingPageWidget> {
     super.initState();
     _isRealtimeEnabled = _realtime.isEnabled(widget.serialNum);
     _dailyTargetController = TextEditingController();
-    _monthlyTargetController = TextEditingController();
-
+    _monthlyTargetController = TextEditingController(); 
+    print("realtime isEnabled: ${_realtime.isEnabled(widget.serialNum)}");
     hideIncome = widget.model == 'HES';
 
     _realtimeCallback = (_) {

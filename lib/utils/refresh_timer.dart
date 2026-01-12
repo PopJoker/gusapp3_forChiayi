@@ -11,7 +11,6 @@ class RealtimeService {
   RealtimeService._internal() {
     _loadPersistedState();
   }
-
   final Map<String, Timer> _timers = {};
   final Map<String, bool> _enabled = {};
   final Map<String, int> _frequency = {};
@@ -47,26 +46,34 @@ class RealtimeService {
 
   // 啟動 Timer
   void start(String serialNum, String model, {int? intervalSec}) {
+    if (_timers.containsKey(serialNum)) {
+      debugPrint('[Realtime] already running: $serialNum');
+      return;
+    }
+
     _enabled[serialNum] = true;
     _saveEnabled(serialNum, true);
 
     _modelMap[serialNum] = model;
-    int sec = intervalSec ?? _frequency[serialNum] ?? 5;
+    final sec = intervalSec ?? _frequency[serialNum] ?? 5;
     _frequency[serialNum] = sec;
     _saveFrequency(serialNum, sec);
 
-    _timers[serialNum]?.cancel();
-    _timers[serialNum] = Timer.periodic(Duration(seconds: sec), (timer) async {
-      try {
-        final data = await ApiService.getDeviceNowData(model, serialNum);
-        debugPrint("[$serialNum] Timer API result: $data");
-        if (_listeners[serialNum] != null) {
-          for (var cb in _listeners[serialNum]!) cb(data['data']);
+    _timers[serialNum] = Timer.periodic(
+      Duration(seconds: sec),
+      (timer) async {
+        try {
+          final data = await ApiService.getDeviceNowData(model, serialNum);
+          if (_listeners[serialNum] != null) {
+            for (var cb in _listeners[serialNum]!) {
+              cb(data['data']);
+            }
+          }
+        } catch (e) {
+          debugPrint("[$serialNum] Timer API error: $e");
         }
-      } catch (e) {
-        debugPrint("[$serialNum] Timer API error: $e");
-      }
-    });
+      },
+    );
   }
 
   // 停止 Timer
